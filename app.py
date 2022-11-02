@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request, session
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_bootstrap import Bootstrap
 import yaml
 import os
 
 app = Flask(__name__)
+Bootstrap(app)
 
 # DB configuration
 db = yaml.safe_load(open('db.yaml'))
@@ -37,8 +39,8 @@ def employees():
     if result_value > 0:
         employees = cursor.fetchall()
         session['username'] = employees[0]['name']
-        return str(check_password_hash(employees[7]['name'], '.amelebalgamspor124:D'))
-        # return render_template('employee.html', employees_html=employees)
+        # return str(check_password_hash(employees[7]['name'], '.amelebalgamspor124:D'))
+        return render_template('employee.html', employees_html=employees)
     return 'EMPTY'
 
 if __name__ == '__main__':
