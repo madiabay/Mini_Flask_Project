@@ -1,12 +1,13 @@
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, flash
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap
-import yaml
-import os
+import yaml, secrets
 
 app = Flask(__name__)
 Bootstrap(app)
+
+secret = secrets.token_urlsafe(32)
 
 # DB configuration
 db = yaml.safe_load(open('db.yaml'))
@@ -15,21 +16,25 @@ app.config['MYSQL_USER'] = db['mysql_user']
 app.config['MYSQL_PASSWORD'] = db['mysql_password']
 app.config['MYSQL_DB'] = db['mysql_db']
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
-mysql = MySQL(app)
 
-app.config['SECRET_KEY'] = os.urandom(24)
+app.secret_key = secret
+
+mysql = MySQL(app)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        form = request.form
-        name = form['name']
-        age = form['age']
-        cursor = mysql.connection.cursor()
-        name = generate_password_hash(name)
-        cursor.execute("INSERT INTO employee(name, age) VALUES(%s, %s);", (name, age))
-        cursor.connection.commit()
-        return 'SUCCESS!', 201
+        try:
+            form = request.form
+            name = form['name']
+            age = form['age']
+            cursor = mysql.connection.cursor()
+            # name = generate_password_hash(name)
+            cursor.execute("INSERT INTO employee(name, age) VALUES(%s, %s);", (name, age))
+            cursor.connection.commit()
+            flash('Your data is successfully inserted', 'success')
+        except:
+            flash('The inserting is failed', 'danger')
     return render_template('index.html')
 
 @app.route('/employees/')
